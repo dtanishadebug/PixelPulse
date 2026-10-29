@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixelPulse</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f5fb;
+      color: #24243a;
+    }
+
+    header {
+      text-align: center;
+      padding: 35px;
+      color: white;
+      background: #5b21b6;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    #searchForm {
+      display: flex;
+      gap: 10px;
+    }
+
+    #searchInput {
+      flex: 1;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    #searchButton {
+      padding: 14px 22px;
+      color: white;
+      background: #5b21b6;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .chips {
+      margin: 25px 0;
+      text-align: center;
+    }
+
+    .chip {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 20px;
+      background: #e9d5ff;
+      cursor: pointer;
+    }
+
+    #results {
+      display: grid;
+      grid-template-columns: repeat(
+        auto-fit, minmax(200px, 1fr)
+      );
+      gap: 18px;
+    }
+
+    .placeholder-card {
+      padding: 35px 15px;
+      background: white;
+      border-radius: 12px;
+      text-align: center;
+      color: #777;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>PixelPulse</h1>
+    <p>Discover something amazing, one image at a time.</p>
+  </header>
+
+  <main>
+    <form id="searchForm">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="Search for images..."
+      >
+      <button id="searchButton" type="submit">
+        Search
+      </button>
+    </form>
+
+    <div class="chips">
+      <button class="chip" type="button">Nature</button>
+      <button class="chip" type="button">Animals</button>
+      <button class="chip" type="button">Space</button>
+      <button class="chip" type="button">Ocean</button>
+    </div>
+
+    <h2>Explore images</h2>
+
+    <section id="results">
+      <div class="placeholder-card">
+        Your images will appear here.
+      </div>
+      <div class="placeholder-card">
+        Search a topic to get started.
+      </div>
+      <div class="placeholder-card">
+        Discover something new!
+      </div>
+    </section>
+  </main>
+
+  <footer>PixelPulse · Explore and discover</footer>
+  
+<script>
+const form = document.getElementById("searchForm");
+const input = document.getElementById("searchInput");
+const results = document.getElementById("results");
+
+form.addEventListener("submit", async function(event) {
+  event.preventDefault();
+
+  const query = input.value.trim();
+
+  if (query === "") {
+    return;
+  }
+
+  results.innerHTML = "";
+
+  const url =
+    "https://commons.wikimedia.org/w/api.php" +
+    "?action=query" +
+    "&generator=search" +
+    "&gsrsearch=" + encodeURIComponent(query) +
+    "&gsrnamespace=6" +
+    "&gsrlimit=12" +
+    "&prop=imageinfo" +
+    "&iiprop=url" +
+    "&iiurlwidth=400" +
+    "&format=json" +
+    "&origin=*";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch images");
+  }
+
+  const data = await response.json();
+  const pages = Object.values(data.query?.pages || {});
+
+  // Extra enhancement: show result count
+  const count = document.createElement("p");
+  count.textContent =
+    `Showing ${pages.length} results for "${query}"`;
+  results.appendChild(count);
+
+  pages.forEach(function(page) {
+    const imageInfo = page.imageinfo?.[0];
+
+    if (!imageInfo) {
+      return;
+    }
+
+    const card = document.createElement("div");
+    card.className = "image-card";
+
+    const img = document.createElement("img");
+    img.src = imageInfo.thumburl || imageInfo.url;
+    img.alt = page.title;
+    img.loading = "lazy";
+
+    const caption = document.createElement("p");
+    caption.textContent = page.title
+      .replace("File:", "")
+      .replaceAll("_", " ");
+
+    card.appendChild(img);
+    card.appendChild(caption);
+    results.appendChild(card);
+  });
+});
+</script>
+</body>
+</html>
+
